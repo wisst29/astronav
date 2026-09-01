@@ -8,19 +8,36 @@ jobs:
       - name: Recuperer le code du depot
         uses: actions/checkout@v4
 
-      - name: Configurer Java 17 (Requis pour Android)
-        uses: actions/setup-java@v4
+      - name: Configurer Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurer Python 3.11
+      - name: Configurer Flutter et Android SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Configurer Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Installer l'environnement de build Flet
-        uses: flet-dev/flet-build-action@v1
+      - name: Installer Flet
+        run: |
+          pip install --upgrade pip
+          pip install flet setuptools wheel
+
+      - name: Corriger le verrou de securite Git
+        run: git config --global --add safe.directory "*"
+
+      - name: Compiler l'APK Android (Commande Directe)
+        run: |
+          flet build apk --no-rich-output
+
+      - name: Sauvegarder le fichier APK final
+        uses: actions/upload-artifact@v4
         with:
-          target: apk
-          python-path: '.'
+          name: Application-AstroNav
+          path: build/apk/*.apk
