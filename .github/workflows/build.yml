@@ -5,33 +5,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Recupérer le code
+      - name: Recuperer le code du dépôt
         uses: actions/checkout@v4
 
-      - name: Configurer Java
-        uses: actions/setup-java@v4
+      - name: Configuration et compilation automatique Flet/Android
+        uses: flet-dev/flet-build-action@v1
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Configurer Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Installer Flet et les outils de build
-        run: |
-          pip install --upgrade pip
-          pip install flet setuptools wheel
-
-      - name: Corriger la securite Git
-        run: git config --global --add safe.directory "*"
-
-      - name: Compiler l'APK Android
-        run: flet build apk
-
-      - name: Sauvegarder le fichier APK final
-        uses: actions/upload-artifact@v4
-        with:
-          name: Application-AstroNav
-          path: build/apk/*.apk
+          target: apk
+          python-path: '.'
