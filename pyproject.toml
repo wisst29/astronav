@@ -1,0 +1,7 @@
+[project]
+name = "astronav"
+version = "0.1.0"
+description = "Application de navigation astronomique maritime"
+dependencies = [
+    "flet",
+]
