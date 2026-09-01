@@ -68,30 +68,10 @@ STARS_CATALOG = {
 
 # --- PARAMÈTRES POUR LES PLANÈTES (VSOP87 simplifié) ---
 PLANETS_VSOP = {
-    "Vénus": {
-        "L0": [4.898950, 0.01113429, 0.0],
-        "B": [0.0, 0.0, 0.0],
-        "R": [0.723332, 0.00000028],
-        "sd": 0.5,
-    },
-    "Mars": {
-        "L0": [1.408554, 0.01555197, 0.0],
-        "B": [0.0, 0.0, 0.0],
-        "R": [1.523679, 0.00000093],
-        "sd": 0.1,
-    },
-    "Jupiter": {
-        "L0": [5.584815, 0.00299618, 0.0],
-        "B": [0.0, 0.0, 0.0],
-        "R": [5.202603, -0.00000152],
-        "sd": 0.5,
-    },
-    "Saturne": {
-        "L0": [6.161520, 0.00120055, 0.0],
-        "B": [0.0, 0.0, 0.0],
-        "R": [9.554909, -0.00000208],
-        "sd": 0.4,
-    },
+    "Vénus": {"L0": [4.898950, 0.01113429, 0.0], "B": [0.0, 0.0, 0.0], "R": [0.723332, 0.00000028], "sd": 0.5},
+    "Mars": {"L0": [1.408554, 0.01555197, 0.0], "B": [0.0, 0.0, 0.0], "R": [1.523679, 0.00000093], "sd": 0.1},
+    "Jupiter": {"L0": [5.584815, 0.00299618, 0.0], "B": [0.0, 0.0, 0.0], "R": [5.202603, -0.00000152], "sd": 0.5},
+    "Saturne": {"L0": [6.161520, 0.00120055, 0.0], "B": [0.0, 0.0, 0.0], "R": [9.554909, -0.00000208], "sd": 0.4},
 }
 
 # --- PARAMÈTRES POUR LA LUNE (ELP/MPP02 simplifié) ---
@@ -245,7 +225,6 @@ def get_longitude_estee():
     return -lon_decimal if lon_card.value == "W" else lon_decimal
 
 def pre_regler_sextant(e):
-    """Calcule et affiche la hauteur et l'azimut théoriques pour l'astre sélectionné."""
     try:
         astre = astre_spinner.value
         lat_deg_val = float(lat_deg.value or 0)
@@ -410,34 +389,42 @@ def calculer_droite(e):
 
 def appliquer_translation(e):
     try:
-        cap_deg = float(cap_suivi.value or 0)
-        dist = float(dist_parcourue.value or 0)
-        cap_rad = math.radians(cap_deg)
-        for d in droites_calculees[:-1]:
-            lat_decimal = deg_min_to_decimal(d["lat_deg"], d["lat_min"])
-            if d["lat_card"] == "S":
-                lat_decimal = -lat_decimal
-            lon_decimal = deg_min_to_decimal(d["lon_deg"], d["lon_min"])
-            if d["lon_card"] == "W":
-                lon_decimal = -lon_decimal
-            delta_lat_decimal = (dist * math.cos(cap_rad)) / 60.0
-            new_lat_decimal = lat_decimal + delta_lat_decimal
-            lat_moy_rad = math.radians(new_lat_decimal - (delta_lat_decimal / 2.0))
-            delta_lon_decimal = (dist * math.sin(cap_rad) / math.cos(lat_moy_rad)) / 60.0
-            new_lon_decimal = lon_decimal + delta_lon_decimal
-            new_lat_deg, new_lat_min = decimal_to_deg_min(abs(new_lat_decimal))
-            new_lat_card = "S" if new_lat_decimal < 0 else "N"
-            new_lon_deg, new_lon_min = decimal_to_deg_min(abs(new_lon_decimal))
-            new_lon_card = "W" if new_lon_decimal < 0 else "E"
-            d["lat_deg"] = new_lat_deg
-            d["lat_min"] = new_lat_min
-            d["lat_card"] = new_lat_card
-            d["lon_deg"] = new_lon_deg
-            d["lon_min"] = new_lon_min
-            d["lon_card"] = new_lon_card
+        cap_compas = float(cap_suivi.value or 0)
+        distance_parcourue_mn = float(dist_parcourue.value or 0)
+        cap_radians = math.radians(cap_compas)
+
+        for droite in droites_calculees[:-1]:
+            latitude_actuelle_degres = deg_min_to_decimal(droite["lat_deg"], droite["lat_min"])
+            if droite["lat_card"] == "S":
+                latitude_actuelle_degres = -latitude_actuelle_degres
+
+            longitude_actuelle_degres = deg_min_to_decimal(droite["lon_deg"], droite["lon_min"])
+            if droite["lon_card"] == "W":
+                longitude_actuelle_degres = -longitude_actuelle_degres
+
+            variation_latitude_degres = (distance_parcourue_mn * math.cos(cap_radians)) / 60.0
+            nouvelle_latitude_degres = latitude_actuelle_degres + variation_latitude_degres
+
+            latitude_moyenne_radians = math.radians(nouvelle_latitude_degres - (variation_latitude_degres / 2.0))
+            variation_longitude_degres = (distance_parcourue_mn * math.sin(cap_radians) / math.cos(latitude_moyenne_radians)) / 60.0
+            nouvelle_longitude_degres = longitude_actuelle_degres + variation_longitude_degres
+
+            nouvelle_latitude_deg, nouvelle_latitude_min = decimal_to_deg_min(abs(nouvelle_latitude_degres))
+            nouvelle_latitude_card = "S" if nouvelle_latitude_degres < 0 else "N"
+
+            nouvelle_longitude_deg, nouvelle_longitude_min = decimal_to_deg_min(abs(nouvelle_longitude_degres))
+            nouvelle_longitude_card = "W" if nouvelle_longitude_degres < 0 else "E"
+
+            droite["lat_deg"] = nouvelle_latitude_deg
+            droite["lat_min"] = nouvelle_latitude_min
+            droite["lat_card"] = nouvelle_latitude_card
+            droite["lon_deg"] = nouvelle_longitude_deg
+            droite["lon_min"] = nouvelle_longitude_min
+            droite["lon_card"] = nouvelle_longitude_card
+
         rafraichir_affichage(trans=True)
     except Exception as ex:
-        result_text.value = f"Erreur estime : {str(ex)}"
+        result_text.value = f"Erreur lors de la translation : {str(ex)}"
         current_page.update()
 
 def rafraichir_affichage(trans=False):
@@ -466,56 +453,93 @@ def main(page: ft.Page):
     global result_text, droites_calculees, temperature_input, pressure_input, current_page
 
     current_page = page
-    page.title = "AstroNav - Droites & Méridienne"
-    page.scroll = "adaptive"
+    page.title = "AstroNav"
     page.theme_mode = ft.ThemeMode.DARK
+    page.padding = 0  # Pas de padding global pour utiliser tout l'espace
+    page.safe_area = ft.SafeArea(all=True)  # Respecte les zones sûres (barre d'état, etc.)
+    page.scroll = "auto"
+    page.fonts = {
+        "Roboto": "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    }
+    page.theme = ft.Theme(
+        font_family="Roboto",
+        page_transitions=ft.PageTransitionsTheme(
+            android=ft.PageTransitionTheme.NONE,
+            ios=ft.PageTransitionTheme.NONE,
+        )
+    )
+
+    # --- Barre d'information en haut ---
+    info_bar = ft.AppBar(
+        title=ft.Text("AstroNav - Navigation Astronique", size=16, weight="bold"),
+        center_title=True,
+        bgcolor=ft.Colors.BLUE_GREY_900,
+        actions=[
+            ft.IconButton(
+                icon=ft.icons.REFRESH,
+                on_click=lambda e: effacer_tout(e),
+                tooltip="Réinitialiser",
+            ),
+        ],
+    )
 
     droites_calculees = []
     ephemerides_cache = {}
 
-    lat_deg = ft.TextField(label="Lat Deg", width=100)
-    lat_min = ft.TextField(label="Lat Min", width=100)
-    lat_card = ft.Dropdown(
-        label="N/S",
-        options=[ft.dropdown.Option("N"), ft.dropdown.Option("S")],
-        value="N",
-        width=80,
-    )
+    # --- Style pour les champs ---
+    text_field_style = {
+        "width": 110,
+        "height": 45,
+        "text_size": 14,
+        "border_color": ft.Colors.BLUE_GREY_700,
+        "focused_border_color": ft.Colors.BLUE_400,
+        "content_padding": ft.padding.only(left=10, right=10),
+    }
 
-    lon_deg = ft.TextField(label="Lon Deg", width=100)
-    lon_min = ft.TextField(label="Lon Min", width=100)
-    lon_card = ft.Dropdown(
-        label="E/W",
-        options=[ft.dropdown.Option("E"), ft.dropdown.Option("W")],
-        value="W",
-        width=80,
-    )
+    dropdown_style = {
+        "width": 110,
+        "height": 45,
+        "text_size": 14,
+    }
+
+    button_style = {
+        "height": 45,
+        "bgcolor": ft.Colors.BLUE_GREY_800,
+        "color": ft.Colors.WHITE,
+        "shape": ft.RoundedRectangleBorder(radius=8),
+        "expand": True,
+    }
+
+    # --- CHAMPS D'ENTRÉE : Position estimée ---
+    lat_deg = ft.TextField(label="Lat Deg", **text_field_style)
+    lat_min = ft.TextField(label="Lat Min", **text_field_style)
+    lat_card = ft.Dropdown(label="N/S", options=[ft.dropdown.Option("N"), ft.dropdown.Option("S")], value="N", **dropdown_style)
+
+    lon_deg = ft.TextField(label="Lon Deg", **text_field_style)
+    lon_min = ft.TextField(label="Lon Min", **text_field_style)
+    lon_card = ft.Dropdown(label="E/W", options=[ft.dropdown.Option("E"), ft.dropdown.Option("W")], value="W", **dropdown_style)
 
     current_time = datetime.now(timezone.utc)
-    date_input = ft.TextField(
-        label="Date (AAAA-MM-JJ)",
-        value=current_time.strftime("%Y-%m-%d"),
-        width=150,
-    )
-    time_input = ft.TextField(
-        label="Heure UTC (HH:MM:SS)",
-        value=current_time.strftime("%H:%M:%S"),
-        width=150,
-    )
+    date_input = ft.TextField(label="Date", value=current_time.strftime("%Y-%m-%d"), **text_field_style)
+    time_input = ft.TextField(label="Heure UTC", value=current_time.strftime("%H:%M:%S"), **text_field_style)
 
+    # --- CHAMPS D'ENTRÉE : Sélection de l'astre et hauteur ---
     astre_spinner = ft.Dropdown(
-        label="Sélectionner l'astre",
+        label="Astre",
         options=[ft.dropdown.Option(a) for a in ASTRES_LIST],
         value="Soleil",
         width=200,
+        height=45,
+        text_size=14,
     )
 
-    hi_deg = ft.TextField(label="Hi Deg", width=100)
-    hi_min = ft.TextField(label="Hi Min", width=100)
-    hi_decimale = ft.TextField(label="Hi Dec", width=80)
+    hi_deg = ft.TextField(label="Hi Deg", **text_field_style)
+    hi_min = ft.TextField(label="Hi Min", **text_field_style)
+    hi_decimale = ft.TextField(label="Hi Dec", width=90, height=45, text_size=14, content_padding=ft.padding.only(left=10, right=10))
 
-    collimation = ft.TextField(label="Collimation (Min)", value="0.0", width=100)
-    hauteur_oeil = ft.TextField(label="Hauteur Œil (m)", value="2.5", width=100)
+    # --- CHAMPS D'ENTRÉE : Corrections et paramètres ---
+    collimation = ft.TextField(label="Collimation", value="0.0", **text_field_style)
+    hauteur_oeil = ft.TextField(label="Hauteur Œil", value="2.5", **text_field_style)
     bord_spinner = ft.Dropdown(
         label="Bord visé",
         options=[
@@ -524,72 +548,130 @@ def main(page: ft.Page):
             ft.dropdown.Option("Milieu/Centre"),
         ],
         value="Inférieur",
-        width=150,
+        **dropdown_style,
     )
 
-    temperature_input = ft.TextField(label="Température (°C)", value="10.0", width=100)
-    pressure_input = ft.TextField(label="Pression (hPa)", value="1010.0", width=100)
+    temperature_input = ft.TextField(label="Température", value="10.0", **text_field_style)
+    pressure_input = ft.TextField(label="Pression", value="1010.0", **text_field_style)
 
-    cap_suivi = ft.TextField(label="Cap (°)", value="0", width=100)
-    dist_parcourue = ft.TextField(label="Distance (MN)", value="0.0", width=100)
+    # --- CHAMPS D'ENTRÉE : Estime (mouvement du navire) ---
+    cap_suivi = ft.TextField(label="Cap", value="0", **text_field_style)
+    dist_parcourue = ft.TextField(label="Distance", value="0.0", **text_field_style)
 
+    # --- AFFICHAGE DES RÉSULTATS ---
     result_text = ft.Text(
         value="En attente de calcul...",
         size=14,
-        color=ft.Colors.BLUE_GREY_100,
+        color=ft.Colors.BLUE_GREY_300,
+        selectable=True,
     )
 
+    # --- MISE EN PAGE DE L'INTERFACE ---
     page.add(
-        ft.Text("POSITION ESTIMÉE", weight="bold", color=ft.Colors.BLUE_200),
-        ft.Row([lat_deg, lat_min, lat_card], alignment=ft.MainAxisAlignment.START),
-        ft.Row([lon_deg, lon_min, lon_card], alignment=ft.MainAxisAlignment.START),
-        ft.Row([date_input, time_input], alignment=ft.MainAxisAlignment.START),
+        info_bar,  # Barre d'information en haut
 
-        ft.Divider(),
-
-        ft.Text("PRÉRÉGLAGE DU SEXTANT", weight="bold", color=ft.Colors.YELLOW_200),
-        ft.Row([astre_spinner], alignment=ft.MainAxisAlignment.START),
-        ft.Button(
-            "Calculer Hauteur/Azimut Théorique",
-            on_click=pre_regler_sextant,
-            bgcolor=ft.Colors.YELLOW_700,
+        # --- Section : Position estimée ---
+        ft.Container(
+            content=ft.Column([
+                ft.Text("📍 POSITION ESTIMÉE", weight="bold", color=ft.Colors.BLUE_200, size=16),
+                ft.Row([lat_deg, lat_min, lat_card], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([lon_deg, lon_min, lon_card], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([date_input, time_input], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+            ], spacing=5),
+            padding=10,
         ),
 
-        ft.Divider(),
+        ft.Divider(height=5, color=ft.Colors.BLUE_GREY_800),
 
-        ft.Text("MÉRIDIENNE (SOLEIL)", weight="bold", color=ft.Colors.ORANGE_200),
-        ft.Row([
-            ft.Button(
-                "1. Calculer Heure",
-                on_click=preparer_meridienne,
-                bgcolor=ft.Colors.BLUE_700,
-            ),
-            ft.Button(
-                "2. Calculer Latitude",
-                on_click=calculer_latitude_meridienne,
-                bgcolor=ft.Colors.GREEN_700,
-            ),
-        ]),
+        # --- Section : Préréglage du sextant ---
+        ft.Container(
+            content=ft.Column([
+                ft.Text("🔭 PRÉRÉGLAGE DU SEXTANT", weight="bold", color=ft.Colors.YELLOW_200, size=16),
+                ft.Row([astre_spinner], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([
+                    ft.Button(
+                        "Calculer Hauteur/Azimut",
+                        on_click=pre_regler_sextant,
+                        height=45,
+                        bgcolor=ft.Colors.YELLOW_700,
+                        color=ft.Colors.BLACK,
+                        shape=ft.RoundedRectangleBorder(radius=8),
+                        expand=True,
+                    )
+                ]),
+            ], spacing=5),
+            padding=10,
+        ),
 
-        ft.Divider(),
+        ft.Divider(height=5, color=ft.Colors.BLUE_GREY_800),
 
-        ft.Text("DROITES SUCCESSIVES", weight="bold", color=ft.Colors.GREEN_200),
-        ft.Row([hi_deg, hi_min, hi_decimale], alignment=ft.MainAxisAlignment.START),
-        ft.Row([collimation, hauteur_oeil, bord_spinner], alignment=ft.MainAxisAlignment.START),
-        ft.Row([temperature_input, pressure_input], alignment=ft.MainAxisAlignment.START),
+        # --- Section : Méridienne (Soleil) ---
+        ft.Container(
+            content=ft.Column([
+                ft.Text("☀️ MÉRIDIENNE", weight="bold", color=ft.Colors.ORANGE_200, size=16),
+                ft.Row([
+                    ft.Button(
+                        "Calculer Heure",
+                        on_click=preparer_meridienne,
+                        **button_style,
+                    ),
+                    ft.Button(
+                        "Calculer Latitude",
+                        on_click=calculer_latitude_meridienne,
+                        bgcolor=ft.Colors.GREEN_700,
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=8),
+                        height=45,
+                        expand=True,
+                    ),
+                ], spacing=5),
+            ], spacing=5),
+            padding=10,
+        ),
 
-        ft.Divider(),
+        ft.Divider(height=5, color=ft.Colors.BLUE_GREY_800),
 
-        ft.Text("ESTIME / LOG", weight="bold", color=ft.Colors.PURPLE_200),
-        ft.Row([cap_suivi, dist_parcourue], alignment=ft.MainAxisAlignment.START),
-        ft.Row([
-            ft.Button("Calculer Droite", on_click=calculer_droite),
-            ft.Button("Translater", on_click=appliquer_translation),
-            ft.Button("Effacer tout", on_click=effacer_tout, bgcolor=ft.Colors.RED_700),
-        ]),
+        # --- Section : Droites successives ---
+        ft.Container(
+            content=ft.Column([
+                ft.Text("📏 DROITES DE HAUTEUR", weight="bold", color=ft.Colors.GREEN_200, size=16),
+                ft.Text("Hauteur instrumentale (Hi):", size=14, color=ft.Colors.BLUE_GREY_300),
+                ft.Row([hi_deg, hi_min, hi_decimale], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([collimation, hauteur_oeil, bord_spinner], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([temperature_input, pressure_input], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+            ], spacing=5),
+            padding=10,
+        ),
 
-        ft.Divider(),
-        result_text,
+        ft.Divider(height=5, color=ft.Colors.BLUE_GREY_800),
+
+        # --- Section : Estime / Log ---
+        ft.Container(
+            content=ft.Column([
+                ft.Text("⛵ ESTIME / LOG", weight="bold", color=ft.Colors.PURPLE_200, size=16),
+                ft.Row([cap_suivi, dist_parcourue], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([
+                    ft.Button("Calculer Droite", on_click=calculer_droite, **button_style),
+                ]),
+                ft.Row([
+                    ft.Button("Translater", on_click=appliquer_translation, **button_style),
+                    ft.Button("Effacer tout", on_click=effacer_tout, bgcolor=ft.Colors.RED_700, color=ft.Colors.WHITE, shape=ft.RoundedRectangleBorder(radius=8), height=45, expand=True),
+                ], spacing=5),
+            ], spacing=5),
+            padding=10,
+        ),
+
+        ft.Divider(height=5, color=ft.Colors.BLUE_GREY_800),
+
+        # --- Affichage des résultats ---
+        ft.Container(
+            content=result_text,
+            padding=15,
+            bgcolor=ft.Colors.BLUE_GREY_900,
+            border_radius=8,
+            margin=ft.margin.only(bottom=10),
+            expand=True,
+        ),
     )
 
-ft.app(target=main)
+ft.app(target=main, view=ft.AppView.FLET_APP)  # Utilise FLET_APP pour une meilleure intégration mobile
