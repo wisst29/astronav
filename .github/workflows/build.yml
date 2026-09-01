@@ -1,0 +1,36 @@
+name: Build Android APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configurer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer Flet et les dépendances
+        run: |
+          pip install flet
+          
+      - name: Débloquer la sécurité Git
+        run: git config --global --add safe.directory "*"
+
+      - name: Compiler l'APK Android
+        run: flet build apk
+
+      - name: Sauvegarder le fichier APK final
+        uses: actions/upload-artifact@v4
+        with:
+          name: Application-AstroNav
+          path: build/apk/*.apk
