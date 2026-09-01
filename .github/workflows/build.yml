@@ -14,11 +14,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurer Flutter et Android SDK
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-
       - name: Configurer Python
         uses: actions/setup-python@v5
         with:
@@ -32,9 +27,9 @@ jobs:
       - name: Corriger le verrou de securite Git
         run: git config --global --add safe.directory "*"
 
-      - name: Compiler l'APK Android (Commande Directe)
+      - name: Generer l'APK Android (Mode Automatique Force)
         run: |
-          flet build apk --no-rich-output
+          flet build apk --no-rich-output --yes
 
       - name: Sauvegarder le fichier APK final
         uses: actions/upload-artifact@v4
