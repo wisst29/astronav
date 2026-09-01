@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Récupérer le code
+      - name: Recupérer le code
         uses: actions/checkout@v4
 
       - name: Configurer Java
@@ -19,11 +19,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Installer Flet et les dépendances
+      - name: Installer Flet et les outils de build
         run: |
-          pip install flet
-          
-      - name: Débloquer la sécurité Git
+          pip install --upgrade pip
+          pip install flet setuptools wheel
+
+      - name: Corriger la securite Git
         run: git config --global --add safe.directory "*"
 
       - name: Compiler l'APK Android
